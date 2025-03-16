@@ -150,7 +150,7 @@ def grid_search_hsv(csv_file):
 if __name__ == "__main__":
 	# individual image bbox testing
 
-    img = cv2.imread("test_images_cone/test10.jpg") # change to problem files
+    img = cv2.imread("test_images_cone/test11.jpg") # change to problem files
     if img is None:
         print("Test image not found!")
     else:
