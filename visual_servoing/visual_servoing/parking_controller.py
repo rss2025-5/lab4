@@ -54,13 +54,13 @@ class ParkingController(Node):
             # do the three point turn
             if dir == 'left':
                 drive_cmd.drive.steering_angle = -np.pi/2
-                drive_cmd.drive.speed = -0.4
+                drive_cmd.drive.speed = -0.75
             if dir == 'right':
                 drive_cmd.drive.steering_angle = np.pi/2
-                drive_cmd.drive.speed = -0.4
+                drive_cmd.drive.speed = -0.75
 
         if self.distance_error > 0.1: # if too far from cone
-            # less than 40 deg turn, so turn directly towards cone
+            # less than 90 deg turn, so turn directly towards cone
             if angle_to_cone < abs(1.5):
                 drive_cmd.drive.steering_angle = angle_to_cone
                 velocity = min(self.distance_error * 0.5, 0.8)
@@ -71,8 +71,13 @@ class ParkingController(Node):
                 else:
                     turn('right')
         elif self.distance_error < -0.1: # if too close to clone
-            velocity = max(self.distance_error * 0.5, -0.5)
-            drive_cmd.drive.speed = velocity - 0.3 # move back extra so now case 1
+            if self.relative_x < 0: # don't crash into cone backwards!
+                drive_cmd.drive.steering_angle = np.pi/2
+                velocity = -self.distance_error * 0.5 + 0.5
+                drive_cmd.drive.speed = velocity
+            else:
+                velocity = max(self.distance_error * 0.5, -0.5)
+                drive_cmd.drive.speed = velocity - 0.3 # move back extra so now case 1
         else:
             if abs(angle_to_cone) > 0.1:
                 if self.relative_y > 0: # on the left
