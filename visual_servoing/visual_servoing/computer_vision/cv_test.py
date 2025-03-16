@@ -78,6 +78,7 @@ def test_algorithm(detection_func, csv_file_path, template_file_path, swap=False
     """
     # Keep track of scores
     scores = {}
+    total = 0
     # Open test images csv
     with open(csv_file_path) as csvDataFile:
         csvReader = csv.reader(csvDataFile)
@@ -97,8 +98,10 @@ def test_algorithm(detection_func, csv_file_path, template_file_path, swap=False
             score = iou_score(bbox_est, bbox_true)
             
             # Add score to dict
+            total += score
             scores[img_path] = score
-
+            
+    print(total)
     # Return scores
     return scores
 

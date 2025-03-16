@@ -103,7 +103,7 @@ def cd_template_matching(img, template):
 	best_match = None
 
 	# Loop over different scales of image
-	for scale in np.linspace(1.5, .5, 50):
+	for scale in np.linspace(2.5, .5, 50):
 		# Resize the image
 		resized_template = imutils.resize(template_canny, width = int(template_canny.shape[1] * scale))
 		(h,w) = resized_template.shape[:2]
@@ -114,10 +114,41 @@ def cd_template_matching(img, template):
 		########## YOUR CODE STARTS HERE ##########
 		# Use OpenCV template matching functions to find the best match
 		# across template scales.
+		result = cv2.matchTemplate(img_canny, resized_template, cv2.TM_CCOEFF_NORMED)
+		(_, max_val, _, max_loc) = cv2.minMaxLoc(result)
+		if best_match is None or max_val > best_match['score']:
+			best_match = {'score': max_val, 'top_left': max_loc, 'template_size': (w, h), 'scale': scale}
+
+	if best_match is not None:
+		top_left = best_match['top_left']
+		(w, h) = best_match['template_size']
+		bounding_box = (top_left, (top_left[0] + w, top_left[1] + h))
+	else:
+		bounding_box = ((0, 0), (0, 0))
+
 
 		# Remember to resize the bounding box using the highest scoring scale
 		# x1,y1 pixel will be accurate, but x2,y2 needs to be correctly scaled
-		bounding_box = ((0,0),(0,0))
+		# bounding_box = ((0,0),(0,0))
 		########### YOUR CODE ENDS HERE ###########
 
 	return bounding_box
+
+if __name__ == "__main__":
+	# individual image bbox testing 
+	img = cv2.imread("test_images_cone/test10.jpg") # change to problem files
+	template = cv2.imread("test_images_cone/cone_template.png", 0)
+	if img is None:
+		print("Test image not found!")
+	else:
+		# bbox = cd_sift_ransac(img, template) # sift + ransac
+		bbox = cd_template_matching(img, template) # template matching
+		print("Detected bounding box:", bbox)
+        
+		(x1, y1), (x2, y2) = bbox
+		if bbox != ((0, 0), (0, 0)):
+			cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        
+		cv2.imshow("Detected Bounding Box", img)
+		cv2.waitKey(0)
+		cv2.destroyAllWindows()
