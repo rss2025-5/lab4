@@ -34,12 +34,13 @@ class ParkingController(Node):
 
         self.get_logger().info("Parking Controller Initialized")
 
+
     def relative_cone_callback(self, msg):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
         distance = np.sqrt(self.relative_x**2 + self.relative_y**2)
 
-        angle_to_cone = np.arctan2(-self.relative_y, self.relative_x)
+        angle_to_cone = -np.arctan2(-self.relative_y, self.relative_x)
         drive_cmd = AckermannDriveStamped()
 
         #################################
@@ -48,18 +49,64 @@ class ParkingController(Node):
         self.get_logger().info("distance error: %s" %self.distance_error)
         self.get_logger().info("angle to cone: %s" %angle_to_cone)
 
-        steering_angle = angle_to_cone
-        if self.distance_error > 0.1:
-            velocity = min(self.distance_error * 0.5, 0.8)  # move towards
-        elif self.distance_error < -0.1:
-            velocity = max(self.distance_error * 0.5, -0.5) # too close, move back
+        # helper func
+        def turn(dir):
+            # do the three point turn
+            if dir == 'left':
+                drive_cmd.drive.steering_angle = -np.pi/2
+                drive_cmd.drive.speed = -0.4
+            if dir == 'right':
+                drive_cmd.drive.steering_angle = np.pi/2
+                drive_cmd.drive.speed = -0.4
+
+        if self.distance_error > 0.1: # if too far from cone
+            # less than 40 deg turn, so turn directly towards cone
+            if angle_to_cone < abs(1.5):
+                drive_cmd.drive.steering_angle = angle_to_cone
+                velocity = min(self.distance_error * 0.5, 0.8)
+                drive_cmd.drive.speed = velocity
+            else:
+                if self.relative_y > 0: # on the left
+                    turn('left')
+                else:
+                    turn('right')
+        elif self.distance_error < -0.1: # if too close to clone
+            velocity = max(self.distance_error * 0.5, -0.5)
+            drive_cmd.drive.speed = velocity - 0.3 # move back extra so now case 1
         else:
-            velocity = 0.0
+            if abs(angle_to_cone) > 0.1:
+                if self.relative_y > 0: # on the left
+                    turn('left')
+                else:
+                    turn('right')
+            else: drive_cmd.drive.speed = 0.0
 
-        
 
-        drive_cmd.drive.steering_angle = steering_angle
-        drive_cmd.drive.speed = velocity
+
+        #else:
+            # distance is good, do:
+            # Angle Check
+
+
+            # Get the closest wall point, do a 90 deg right or left turn away from it
+
+            # Move forward
+
+
+            # turn the opposite direction of the above but 45 deg
+
+
+            # move back
+
+
+            # turn 45 deg opposite to above
+
+
+            # move forward
+
+
+        # drive_cmd.drive.steering_angle = angle_to_cone
+        # drive_cmd.drive.speed = velocity
         #################################
 
         self.drive_pub.publish(drive_cmd)
