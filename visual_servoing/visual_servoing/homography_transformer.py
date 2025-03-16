@@ -20,22 +20,22 @@ from vs_msgs.msg import ConeLocation, ConeLocationPixel
 # see README.md for coordinate frame description
 
 ######################################################
-## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
-PTS_IMAGE_PLANE = [[-1, -1],
-                   [-1, -1],
-                   [-1, -1],
-                   [-1, -1]] # dummy points
+
+PTS_IMAGE_PLANE = [[286, 172],
+                   [80, 314],
+                   [435, 312],
+                   [509, 150]] 
 ######################################################
 
 # PTS_GROUND_PLANE units are in inches
 # car looks along positive x axis with positive y axis to left
 
 ######################################################
-## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
-PTS_GROUND_PLANE = [[-1, -1],
-                    [-1, -1],
-                    [-1, -1],
-                    [-1, -1]] # dummy points
+
+PTS_GROUND_PLANE = [[26.5, 3.8],
+                    [16.25, 14.2],
+                    [13.4, -2.4],
+                    [25.3, -12.0]] 
 ######################################################
 
 METERS_PER_INCH = 0.0254
