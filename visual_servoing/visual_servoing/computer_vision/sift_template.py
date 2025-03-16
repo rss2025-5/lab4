@@ -110,7 +110,7 @@ def cd_template_matching(img, template):
 	bounding_box = ((0,0), (0,0))
 
 	# Loop over different scales of image
-	for scale in np.linspace(1.5, .5, 50):
+	for scale in np.linspace(2.5, .5, 50):
 		# Resize the image
 		resized_template = imutils.resize(template_canny, width = int(template_canny.shape[1] * scale))
 		(h,w) = resized_template.shape[:2]
@@ -121,6 +121,7 @@ def cd_template_matching(img, template):
 		########## YOUR CODE STARTS HERE ##########
 		# Use OpenCV template matching functions to find the best match
 		# across template scales.
+
 		img_copy = img_canny.copy()
 		method = cv2.TM_CCOEFF_NORMED
 
@@ -143,13 +144,16 @@ def cd_template_matching(img, template):
 	return bounding_box
 
 if __name__ == "__main__":
+
 	# individual image bbox testing
 	img = cv2.imread("test_images_citgo/citgo1.jpeg") # change to problem files
 	template = cv2.imread("test_images_citgo/citgo_template.png", 0)
+
 	if img is None:
 		print("Test image not found!")
 	else:
 		# bbox = cd_sift_ransac(img, template) # sift + ransac
+
 		bbox = cd_sift_ransac(img, template) # template matching
 		print("Detected bounding box:", bbox)
 
