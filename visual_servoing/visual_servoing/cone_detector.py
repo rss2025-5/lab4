@@ -41,20 +41,39 @@ class ConeDetector(Node):
         # publish this pixel (u, v) to the /relative_cone_px topic; the homography transformer will
         # convert it to the car frame.
 
-        image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
-        bbox = cd_color_segmentation(image)
-        if bbox is not None:
-            c1, c2 = bbox
-            cv2.rectangle(image, c1, c2, (0, 255, 0), 2)
-            bottom_center = (int((c1[0] + c2[0])/2), c2[1])
-            cone_msg = ConeLocationPixel()
-            cone_msg.u = bottom_center[0]
-            cone_msg.v = bottom_center[1]
-            self.cone_pub.publish(cone_msg)
+        if not self.LineFollower:
+            image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
+            bbox = cd_color_segmentation(image)
+            if bbox is not None:
+                c1, c2 = bbox
+                cv2.rectangle(image, c1, c2, (0, 255, 0), 2)
+                bottom_center = (int((c1[0] + c2[0])/2), c2[1])
+                cone_msg = ConeLocationPixel()
+                cone_msg.u = 1.0 * bottom_center[0]
+                cone_msg.v = 1.0 * bottom_center[1]
+                self.cone_pub.publish(cone_msg)
         else:
+            image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
+            height, _, _ = image.shape
+            top    = int(0.50 * height)   # e.g. cut off top 50%
+            bottom = int(0.80 * height) 
+            cropped_image = image[top:bottom, :]
+            bbox = cd_color_segmentation(cropped_image)
+            if bbox is not None:
+                c1, c2 = bbox
+                cv2.rectangle(cropped_image, c1, c2, (0, 255, 0), 2)
+                bottom_center = (int((c1[0] + c2[0])/2), c2[1])
+                cone_msg = ConeLocationPixel()
+                cone_msg.u = bottom_center[0]
+                cone_msg.v = bottom_center[1]
+                self.cone_pub.publish(cone_msg)
+        
             self.get_logger().info("No cone detected.")
-        debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
-        self.debug_pub.publish(debug_msg)
+            debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
+            self.debug_pub.publish(debug_msg)
+
+    
+
 
 def main(args=None):
     rclpy.init(args=args)
