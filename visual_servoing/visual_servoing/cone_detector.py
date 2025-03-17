@@ -44,12 +44,12 @@ class ConeDetector(Node):
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
         bbox = cd_color_segmentation(image)
         if bbox is not None:
-            x, y, w, h = bbox
-            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            bottom_center = (int(x + w / 2), y + h)
+            c1, c2 = bbox
+            cv2.rectangle(image, c1, c2, (0, 255, 0), 2)
+            bottom_center = (int((c1[0] + c2[0])/2), c2[1])
             cone_msg = ConeLocationPixel()
-            cone_msg.x = bottom_center[0]
-            cone_msg.y = bottom_center[1]
+            cone_msg.u = bottom_center[0]
+            cone_msg.v = bottom_center[1]
             self.cone_pub.publish(cone_msg)
         else:
             self.get_logger().info("No cone detected.")

@@ -56,8 +56,6 @@ class ParkingController(Node):
         else:
             velocity = 0.0
 
-        
-
         drive_cmd.drive.steering_angle = steering_angle
         drive_cmd.drive.speed = velocity
         #################################
