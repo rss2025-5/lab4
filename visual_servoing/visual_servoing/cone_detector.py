@@ -55,7 +55,7 @@ class ConeDetector(Node):
         else:
             image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
             height, _, _ = image.shape
-            top    = int(0.20 * height)   # e.g. cut off top 20%
+            top    = int(0.50 * height)   # e.g. cut off top 50%
             bottom = int(0.80 * height) 
             cropped_image = image[top:bottom, :]
             bbox = cd_color_segmentation(cropped_image)
