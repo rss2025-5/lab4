@@ -8,14 +8,14 @@ import math
 from vs_msgs.msg import ConeLocation, ParkingError
 from ackermann_msgs.msg import AckermannDriveStamped
 
-class ParkingController(Node):
+class LineFollower(Node):
     """
     A controller for parking in front of a cone.
     Listens for a relative cone location and publishes control commands.
     Can be used in the simulator and on the real robot.
     """
     def __init__(self):
-        super().__init__("parking_controller")
+        super().__init__("line_follower")
 
         self.declare_parameter("drive_topic")
         DRIVE_TOPIC = self.get_parameter("drive_topic").value # set in launch file; different for simulator vs racecar
@@ -26,63 +26,35 @@ class ParkingController(Node):
         self.create_subscription(ConeLocation, "/relative_cone",
             self.relative_cone_callback, 1)
 
-        self.parking_distance = 0.4 # meters; try playing with this number!
+        self.following_distance = 0.1
         self.relative_x = 0
         self.relative_y = 0
         self.distance_error = 0
+        self.wheelbase = 0.33
 
 
-        self.get_logger().info("Parking Controller Initialized")
+        self.get_logger().info("Line Follower Initialized")
 
-
-    # def look_around(self):
-    #     # modify the subscription to listen to ZED
 
     def relative_cone_callback(self, msg):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos - 0.02
         distance = np.sqrt(self.relative_x**2 + self.relative_y**2)
 
-        angle_to_cone = -np.arctan2(-self.relative_y, self.relative_x)
+        angle_to_line= -np.arctan2(-self.relative_y, self.relative_x)
         drive_cmd = AckermannDriveStamped()
 
         #################################
-        self.distance_error = distance - self.parking_distance
+        self.distance_error = distance - self.following_distance
 
         self.get_logger().info("distance error: %s" %self.distance_error)
-        self.get_logger().info("angle to cone: %s" %angle_to_cone)
+        self.get_logger().info("angle to cone: %s" %angle_to_line)
 
-        # helper func
-        def turn(dir):
-            # do the three point turn
-            if dir == 'left':
-                drive_cmd.drive.steering_angle = -np.pi/2
-                drive_cmd.drive.speed = -0.5
-            if dir == 'right':
-                drive_cmd.drive.steering_angle = np.pi/2
-                drive_cmd.drive.speed = -0.5
+        steering_angle = math.atan2(2.0 * self.wheelbase * math.sin(angle_to_line), distance)
+        velocity = min(self.distance_error*2, 0.8)
 
-        if abs(angle_to_cone) < np.pi/3: # if angle less than 60 deg
-            if self.distance_error < 0.25 and abs(angle_to_cone) > 0.1: # too close, angle not reached, go back
-                drive_cmd.drive.steering_angle = -angle_to_cone
-                velocity = -0.8
-                drive_cmd.drive.speed = velocity
-                self.get_logger().info("1")
-            elif self.distance_error > 0.07 and abs(angle_to_cone) > 0.1: # too far, angle not reached, go forward
-                drive_cmd.drive.steering_angle = angle_to_cone
-                velocity = min(self.distance_error * 2, 0.8)
-                drive_cmd.drive.speed = velocity
-                self.get_logger().info("2")
-            else:
-                drive_cmd.drive.steering_angle = angle_to_cone
-                velocity = min(self.distance_error * 2, 0.8)
-                drive_cmd.drive.speed = velocity
-                self.get_logger().info("3")
-        else:
-            if self.relative_y > 0: # cone on the left
-                turn('left')
-            else:
-                turn('right')
+        drive_cmd.drive.steering_angle = steering_angle
+        drive_cmd.drive.speed = velocity  
 
         self.drive_pub.publish(drive_cmd)
         self.error_publisher()
@@ -107,7 +79,7 @@ class ParkingController(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    pc = ParkingController()
+    pc = LineFollower()
     rclpy.spin(pc)
     rclpy.shutdown()
 
