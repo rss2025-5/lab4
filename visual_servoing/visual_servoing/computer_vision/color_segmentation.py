@@ -73,8 +73,8 @@ def cd_color_segmentation(img, lower_orange = None, upper_orange = None,  templa
 				(x1, y1) is the top left of the bbox and (x2, y2) is the bottom right of the bbox
 	"""
 	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-	lower_orange = np.array([3, 150, 150]) # TUNE: grid search results: 7, 177, 147
-	upper_orange = np.array([20, 255, 255]) # TUNE grid search results: 30, 255, 255
+	lower_orange = np.array([0, 80, 100]) # TUNE: grid search results: 7, 177, 147
+	upper_orange = np.array([7, 255, 255]) # TUNE grid search results: 30, 255, 255
 	# mask = cv2.inRange(hsv, lower_orange, upper_orange)
 	mask = cv2.inRange(hsv, lower_orange, upper_orange)
 	kernel = np.ones((5, 5), np.uint8)
@@ -83,13 +83,13 @@ def cd_color_segmentation(img, lower_orange = None, upper_orange = None,  templa
 	contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	if contours:
 		largest_contour = max(contours, key=cv2.contourArea)
-		if cv2.contourArea(largest_contour) > 60:
+		if cv2.contourArea(largest_contour) > 40:
 			x, y, w, h = cv2.boundingRect(largest_contour)
 			bounding_box = ((x, y), (x + w, y + h))
 		else:
-			bounding_box = ((0, 0), (0, 0))
+			bounding_box = ((320, 0), (320, 0))
 	else:
-		bounding_box = ((0, 0), (0, 0))
+		bounding_box = ((320, 0), (320, 0))
 
 	return bounding_box
 
@@ -99,8 +99,8 @@ def detect_orange(img):
         cv2.imshow("1 - HSV Image", hsv)
 
         # Step 2: Threshold (inRange)
-        lower_orange = np.array([3, 150, 150]) 
-        upper_orange = np.array([20, 255, 255])
+        lower_orange = np.array([0, 100, 100]) 
+        upper_orange = np.array([179, 255, 200])
         mask_inrange = cv2.inRange(hsv, lower_orange, upper_orange)
         cv2.imshow("2 - Mask (inRange)", mask_inrange)
 
@@ -116,7 +116,7 @@ def detect_orange(img):
 
         if contours:
             largest_contour = max(contours, key=cv2.contourArea)
-            if cv2.contourArea(largest_contour) > 60:
+            if cv2.contourArea(largest_contour) > 50:
                 x, y, w, h = cv2.boundingRect(largest_contour)
                 bounding_box = ((x, y), (x + w, y + h))
                 # Step 5: Draw bounding box on the original (BGR) image
