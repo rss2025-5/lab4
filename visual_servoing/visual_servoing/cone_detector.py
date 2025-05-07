@@ -6,7 +6,7 @@ import numpy as np
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
-
+from std_msgs.msg import Bool
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point #geometry_msgs not in CMake file
 from vs_msgs.msg import ConeLocationPixel
@@ -29,11 +29,11 @@ class ConeDetector(Node):
         # Subscribe to ZED camera RGB frames
         self.cone_pub = self.create_publisher(ConeLocationPixel, "/relative_cone_px", 10)
         self.debug_pub = self.create_publisher(Image, "/cone_debug_img", 10)
-        self.image_sub = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.image_callback, 5)
+        self.image_sub = self.create_subscription(Image, "/traffic", self.image_callback, 10)
         self.bridge = CvBridge() # Converts between ROS images and OpenCV Images
 
         self.get_logger().info("Cone Detector Initialized")
-
+        self.is_red = self.create_publisher(Bool, '/is_red', 10)
     def image_callback(self, image_msg):
         # Apply your imported color segmentation function (cd_color_segmentation) to the image msg here
         # From your bounding box, take the center pixel on the bottom
@@ -44,6 +44,9 @@ class ConeDetector(Node):
         if not self.LineFollower:
             image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
             bbox = cd_color_segmentation(image)
+            black_img = np.zeros((360, 640, 3), dtype.uint8)
+            black_img_msg = self.bridge.imgmsg_to_cv2(black_img, "bgr8")
+            self.debug_pub.publish(black_img_msg)
             if bbox is not None:
                 c1, c2 = bbox
                 cv2.rectangle(image, c1, c2, (0, 255, 0), 2)
@@ -52,9 +55,16 @@ class ConeDetector(Node):
                 cone_msg.u = 1.0 * bottom_center[0]
                 cone_msg.v = 1.0 * bottom_center[1]
                 self.cone_pub.publish(cone_msg)
+                bool_msg = Bool()
+                bool_msg.data = True
+                self.is_red.publish(bool_msg)
                 debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
                 self.debug_pub.publish(debug_msg)
+            else:
+                bool_msg.data = False
+                self.is_red.publish(bool_msg)
         else:
+            bool_msg = Bool()
             image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
             height, width, _ = image.shape
             top    = int(0.35*height)   # e.g. cut off top 50%
@@ -63,6 +73,8 @@ class ConeDetector(Node):
             right = int(width)
             cropped_image = image[top:bottom,left:right]
             bbox = cd_color_segmentation(cropped_image)
+
+        
             if bbox is not None:
                 c1, c2 = bbox
                 cv2.rectangle(cropped_image, c1, c2, (0, 255, 0), 2)
@@ -73,6 +85,12 @@ class ConeDetector(Node):
                 self.cone_pub.publish(cone_msg)
                 debug_msg = self.bridge.cv2_to_imgmsg(cropped_image, "bgr8")
                 self.debug_pub.publish(debug_msg)
+                bool_msg = Bool()
+                bool_msg.data = True
+                self.is_red.publish(bool_msg)
+            else:
+                bool_msg.data = False
+                self.is_red.publish(bool_msg)
 
     
 
