@@ -67,7 +67,7 @@ class ConeDetector(Node):
             bool_msg = Bool()
             image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
             height, width, _ = image.shape
-            top    = int(0.35*height)   # e.g. cut off top 50%
+            top    = int(0.0*height)   # e.g. cut off top 50%
             bottom = int(height)
             left = int(0)
             right = int(width)

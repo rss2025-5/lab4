@@ -64,18 +64,25 @@ def iou_score(bbox1, bbox2):
 
 def cd_color_segmentation(img, lower_orange = None, upper_orange = None,  template = None):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower_orange = np.array([0, 80, 100]) # TUNE: grid search results: 7, 177, 147
-    upper_orange = np.array([7, 255, 255]) # TUNE grid search results: 30, 255, 255
-    # mask = cv2.inRange(hsv, lower_orange, upper_orange)
-    mask = cv2.inRange(hsv, lower_orange, upper_orange)
+    lower_red_1 = np.array([0, 100, 100]) # TUNE: grid search results: 7, 177, 147
+    upper_red_1 = np.array([150, 255, 255]) # TUNE grid search results: 30, 255, 255
+    lower_red_2 = np.array([0, 100, 100])
+    upper_red_2 = np.array([180, 255, 255])
+    mask1 = cv2.inRange(hsv, lower_red_1, upper_red_1)
+    mask2  = cv2.inRange(hsv, lower_red_2, upper_red_2)
     kernel = np.ones((5, 5), np.uint8)
-    mask = cv2.erode(mask, kernel, iterations=1)
-    mask = cv2.dilate(mask, kernel, iterations=2)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    mask1 = cv2.erode(mask1, kernel, iterations=1)
+    mask1 = cv2.dilate(mask1, kernel, iterations=2)
+    contours1, _ = cv2.findContours(mask1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    mask2 = cv2.erode(mask2, kernel, iterations=1)
+    mask2 = cv2.dilate(mask2, kernel, iterations=2)
+    contours2, _ = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     bounding_box = None
-    if contours:
-        largest_contour = max(contours, key=cv2.contourArea)
-        if cv2.contourArea(largest_contour) > 40:
+    if contours1 or contours2:
+        largest_contour1 = max(contours1, key=cv2.contourArea)
+        largest_contour2 = max(contours2, key=cv2.contourArea)
+        largest_contour = max([largest_contour1, largest_contour2], key=cv2.contourArea)
+        if cv2.contourArea(largest_contour) > 20:
             x, y, w, h = cv2.boundingRect(largest_contour)
             bounding_box = ((x, y), (x + w, y + h))
     return bounding_box
